@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using UnityEditor.Search;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -24,8 +26,13 @@ public class PlayerController : MonoBehaviour, ICharacter
     private InputAction jump;
     bool facingRight = true;
     private bool isJumping = false;
+    private bool isDashing = false;
     private bool isFireing;
-    private bool isGrounded;
+    public bool isGrounded;
+    bool playerControlActive = true;
+    bool dash;
+
+    private float gravity = 1;
 
 
     Vector2 moveDirection = Vector2.zero;
@@ -52,7 +59,8 @@ public class PlayerController : MonoBehaviour, ICharacter
         fire.performed += Fire;
         jump = playerControls.Player.Jump;
         jump.Enable();
-        jump.performed += Jump;
+        jump.started += Jump;
+        jump.canceled += JumpShorten;
     }
 
     void Update()
@@ -63,14 +71,49 @@ public class PlayerController : MonoBehaviour, ICharacter
 
     private void FixedUpdate()
     {
-        rb.velocity = new Vector2(moveDirection.x * speed, rb.velocity.y);
         if (isJumping)
         {
             rb.AddForce(new Vector2(0, jumpForce), ForceMode2D.Impulse);
             isJumping = false;
         }
 
+        if (isDashing)
+        {
+            playerControlActive = false;            
+            isDashing = false;
+            StartCoroutine(DashCoroutine());
+        }
+
         currentSpeed = MathF.Abs(rb.velocity.x);
+
+        if (!isGrounded && playerControlActive)
+        {
+            rb.gravityScale += 0.05f;
+        }
+
+        if (playerControlActive)
+        {
+            rb.velocity = new Vector2(moveDirection.x * speed, rb.velocity.y);
+        }
+    }
+
+    IEnumerator DashCoroutine() 
+    {
+        rb.gravityScale = 0;
+        rb.velocity = Vector2.zero;
+        if (facingRight)
+        {
+            rb.AddForce(new Vector2(jumpForce, 0), ForceMode2D.Impulse);
+        }
+        else
+        {
+            rb.AddForce(new Vector2(-jumpForce, 0), ForceMode2D.Impulse);
+        }
+        yield return new WaitForSeconds(0.33f);
+        rb.gravityScale = 1;
+
+        rb.velocity = Vector2.zero;
+        playerControlActive = true;
     }
 
     private void Flip()
@@ -83,11 +126,28 @@ public class PlayerController : MonoBehaviour, ICharacter
 
     private void Jump(InputAction.CallbackContext context)
     {
-        if (!isGrounded) return;
+        if (!isGrounded && !dash) return;
+        if (isGrounded)
+        {
+            Debug.Log("Jumping");
+            isJumping = true;
+            animController.PlayJump();
+        }
+        else
+        {
+            Debug.Log("Dashing");
+            isDashing = true;
+        }
 
-        Debug.Log("Jumping");
-        isJumping = true;
-        animController.PlayJump();
+    }
+
+    private void JumpShorten(InputAction.CallbackContext context)
+    {
+        if (isGrounded) return;
+        if (rb.velocity.y < 0) return;
+
+        Debug.Log("JumpingShorting");
+        rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y / 2);
 
     }
 
@@ -105,19 +165,27 @@ public class PlayerController : MonoBehaviour, ICharacter
         transform.GetChild(0).Rotate(0, 180, 0);
     }
 
+    public void resetVelocity()
+    {
+        rb.velocity = Vector2.zero;
+    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Ground"))
         {
             isGrounded = true;
+            dash = false;
+            rb.gravityScale = 1;
             animController.PlayLand();
         }
     }
     private void OnTriggerExit2D(Collider2D collision)
     {
-        if (collision.CompareTag("Ground"))
+        if (collision.CompareTag("Ground") || collision.CompareTag("Block"))
         {
             isGrounded = false;
+            dash = true;
         }
     }
 
@@ -129,5 +197,5 @@ public class PlayerController : MonoBehaviour, ICharacter
         jump.Disable();
     }
 
-    
+
 }
