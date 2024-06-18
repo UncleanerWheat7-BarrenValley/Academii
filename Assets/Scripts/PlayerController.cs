@@ -30,7 +30,7 @@ public class PlayerController : MonoBehaviour, ICharacter
     private bool isFireing;
     public bool isGrounded;
     bool playerControlActive = true;
-    bool dash;
+    bool canDash;
 
     private float gravity = 1;
 
@@ -79,7 +79,7 @@ public class PlayerController : MonoBehaviour, ICharacter
 
         if (isDashing)
         {
-            playerControlActive = false;            
+            playerControlActive = false;
             isDashing = false;
             StartCoroutine(DashCoroutine());
         }
@@ -97,7 +97,7 @@ public class PlayerController : MonoBehaviour, ICharacter
         }
     }
 
-    IEnumerator DashCoroutine() 
+    IEnumerator DashCoroutine()
     {
         rb.gravityScale = 0;
         rb.velocity = Vector2.zero;
@@ -126,17 +126,18 @@ public class PlayerController : MonoBehaviour, ICharacter
 
     private void Jump(InputAction.CallbackContext context)
     {
-        if (!isGrounded && !dash) return;
+        if (!isGrounded && !canDash) return;
         if (isGrounded)
         {
             Debug.Log("Jumping");
             isJumping = true;
             animController.PlayJump();
         }
-        else
+        else if(canDash) 
         {
             Debug.Log("Dashing");
             isDashing = true;
+            canDash = false;
         }
 
     }
@@ -174,8 +175,7 @@ public class PlayerController : MonoBehaviour, ICharacter
     {
         if (collision.CompareTag("Ground"))
         {
-            isGrounded = true;
-            dash = false;
+            isGrounded = true;            
             rb.gravityScale = 1;
             animController.PlayLand();
         }
@@ -185,7 +185,7 @@ public class PlayerController : MonoBehaviour, ICharacter
         if (collision.CompareTag("Ground") || collision.CompareTag("Block"))
         {
             isGrounded = false;
-            dash = true;
+            canDash = true;
         }
     }
 

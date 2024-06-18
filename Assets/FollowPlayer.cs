@@ -4,17 +4,16 @@ using UnityEngine;
 
 public class FollowPlayer : MonoBehaviour
 {
-    [SerializeField]
-    GameObject player;
-    public Vector3 Offset;
-    public float speed;
+    public Transform player; // Reference to the player's transform
+    public float smoothSpeed = 0.125f; // Adjust the smoothness of the camera
+    public Vector3 offset; // Offset between the player and camera
 
+    private Vector3 velocity = Vector3.zero;
 
-
-
-    // Update is called once per frame
-    void LateUpdate()
+    void FixedUpdate()
     {
-        transform.position = Vector3.Slerp(transform.position, player.transform.position + Offset, speed * Time.deltaTime);
+        Vector3 desiredPosition = player.position + offset;
+        Vector3 smoothedPosition = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, smoothSpeed);
+        transform.position = smoothedPosition;
     }
 }

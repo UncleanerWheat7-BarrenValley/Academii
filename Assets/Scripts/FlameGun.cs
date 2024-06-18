@@ -29,6 +29,8 @@ public class FlameGun : MonoBehaviour
         // Instantiate the projectile
         GameObject projectile = Instantiate(fireProjectile, fireProjectileTransform.position, Quaternion.identity);
 
+        Destroy(projectile,5);
+
         // Get the Rigidbody2D component of the projectile and set its velocity
         Rigidbody2D rb = projectile.GetComponent<Rigidbody2D>();
         if (rb != null)

@@ -8,7 +8,7 @@ public class Exit : MonoBehaviour
     private int LightsLit;
     public int requiredLights;
 
-    bool ExitOpen;
+    bool ExitOpen = false;
 
     private void Start()
     {
@@ -35,6 +35,7 @@ public class Exit : MonoBehaviour
         if (LightsLit == requiredLights)
         {
             animator.SetTrigger("Open");
+            ExitOpen = true;
         }
     }
 
