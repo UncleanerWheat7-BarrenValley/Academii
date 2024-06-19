@@ -1,8 +1,8 @@
 using System;
 using System.Collections;
-using UnityEditor.Search;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour, ICharacter
 {
@@ -118,7 +118,7 @@ public class PlayerController : MonoBehaviour, ICharacter
 
     private void Flip()
     {
-        if (rb.velocity.x > 0 && !facingRight || rb.velocity.x < 0 && facingRight)
+        if (moveDirection.x > 0 && !facingRight || moveDirection.x < 0 && facingRight)
         {
             FlipCharacter();
         }
@@ -175,9 +175,21 @@ public class PlayerController : MonoBehaviour, ICharacter
     {
         if (collision.CompareTag("Ground"))
         {
-            isGrounded = true;            
+            isGrounded = true;
             rb.gravityScale = 1;
             animController.PlayLand();
+        }
+
+        if (collision.CompareTag("Spring")) 
+        {
+            rb.velocity = Vector2.zero;
+            rb.gravityScale = 1;
+            rb.AddForce(new Vector2(0, jumpForce * 2), ForceMode2D.Impulse);
+        }
+
+        if (collision.CompareTag("Kill")) 
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
     }
     private void OnTriggerExit2D(Collider2D collision)
