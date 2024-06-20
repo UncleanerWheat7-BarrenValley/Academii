@@ -32,6 +32,6 @@ public class AnimationController : MonoBehaviour
 
     public void PlayFire()
     {
-        animator.SetBool("Fire", true);
+        animator.SetTrigger("Fire");
     }
 }

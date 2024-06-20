@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
-public class PlayerController : MonoBehaviour, ICharacter
+public class PlayerController : MonoBehaviour
 {
     [SerializeField]
     Rigidbody2D rb;
@@ -12,61 +12,21 @@ public class PlayerController : MonoBehaviour, ICharacter
     AnimationController animController;
     [SerializeField]
     Transform groundCheck;
-    [SerializeField]
-    FlameGun flameGun;
-
-
 
     public float currentSpeed;
     public float speed = 5;
     public float jumpForce;
-    public PlayerInputActions playerControls;
-    private InputAction move;
-    private InputAction fire;
-    private InputAction jump;
-    bool facingRight = true;
     private bool isJumping = false;
     private bool isDashing = false;
     private bool isFireing;
     public bool isGrounded;
     bool playerControlActive = true;
     bool canDash;
-
-    private float gravity = 1;
-
-
     Vector2 moveDirection = Vector2.zero;
 
-    float ICharacter.speed { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-    public int Health { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-
-    public void damage(int damage)
+    public void MoveCharacter(Vector2 movementInput)
     {
-        Health -= damage;
-    }
-
-    private void Awake()
-    {
-        playerControls = new PlayerInputActions();
-    }
-
-    private void OnEnable()
-    {
-        move = playerControls.Player.Move;
-        move.Enable();
-        fire = playerControls.Player.Fire;
-        fire.Enable();
-        fire.performed += Fire;
-        jump = playerControls.Player.Jump;
-        jump.Enable();
-        jump.started += Jump;
-        jump.canceled += JumpShorten;
-    }
-
-    void Update()
-    {
-        moveDirection = move.ReadValue<Vector2>();
-        Flip();
+        moveDirection = movementInput;
     }
 
     private void FixedUpdate()
@@ -99,8 +59,19 @@ public class PlayerController : MonoBehaviour, ICharacter
 
     IEnumerator DashCoroutine()
     {
+        bool facingRight;
+        if (rb.velocity.x < 0)
+        {
+            facingRight = false;
+        }
+        else
+        {
+            facingRight = true;
+        }
+
         rb.gravityScale = 0;
         rb.velocity = Vector2.zero;
+
         if (facingRight)
         {
             rb.AddForce(new Vector2(jumpForce, 0), ForceMode2D.Impulse);
@@ -109,22 +80,14 @@ public class PlayerController : MonoBehaviour, ICharacter
         {
             rb.AddForce(new Vector2(-jumpForce, 0), ForceMode2D.Impulse);
         }
+
         yield return new WaitForSeconds(0.33f);
         rb.gravityScale = 1;
-
         rb.velocity = Vector2.zero;
         playerControlActive = true;
     }
 
-    private void Flip()
-    {
-        if (moveDirection.x > 0 && !facingRight || moveDirection.x < 0 && facingRight)
-        {
-            FlipCharacter();
-        }
-    }
-
-    private void Jump(InputAction.CallbackContext context)
+    public void Jump()
     {
         if (!isGrounded && !canDash) return;
         if (isGrounded)
@@ -133,16 +96,15 @@ public class PlayerController : MonoBehaviour, ICharacter
             isJumping = true;
             animController.PlayJump();
         }
-        else if(canDash) 
+        else if (canDash)
         {
             Debug.Log("Dashing");
             isDashing = true;
             canDash = false;
         }
-
     }
 
-    private void JumpShorten(InputAction.CallbackContext context)
+    public void JumpShorten()
     {
         if (isGrounded) return;
         if (rb.velocity.y < 0) return;
@@ -152,17 +114,13 @@ public class PlayerController : MonoBehaviour, ICharacter
 
     }
 
-    private void Fire(InputAction.CallbackContext context)
+    public void Fire()
     {
-        Debug.Log("Firing");
-        isFireing = true;
-        animController.PlayFire();
-        flameGun.FireFlame();
+        animController.PlayFire();        
     }
 
-    private void FlipCharacter()
+    public void FlipCharacter()
     {
-        facingRight = !facingRight;
         transform.GetChild(0).Rotate(0, 180, 0);
     }
 
@@ -180,14 +138,14 @@ public class PlayerController : MonoBehaviour, ICharacter
             animController.PlayLand();
         }
 
-        if (collision.CompareTag("Spring")) 
+        if (collision.CompareTag("Spring"))
         {
             rb.velocity = Vector2.zero;
             rb.gravityScale = 1;
             rb.AddForce(new Vector2(0, jumpForce * 2), ForceMode2D.Impulse);
         }
 
-        if (collision.CompareTag("Kill")) 
+        if (collision.CompareTag("Kill"))
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
@@ -200,14 +158,4 @@ public class PlayerController : MonoBehaviour, ICharacter
             canDash = true;
         }
     }
-
-
-    private void OnDisable()
-    {
-        move.Disable();
-        fire.Disable();
-        jump.Disable();
-    }
-
-
 }

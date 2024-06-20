@@ -11,28 +11,21 @@ public class FlameGun : MonoBehaviour
     Transform fireProjectileTransform;
 
     private Camera mainCamera;
-    // Start is called before the first frame update
     void Start()
     {
         mainCamera = Camera.main;
-    }    
+    }
 
-    public void FireFlame() 
+    public void FireFlame()
     {
-        // Get the mouse position in world coordinates
         Vector3 mousePosition = mainCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        mousePosition.z = 0; // Ensure the z-coordinate is zero since we're in 2D
+        mousePosition.z = 0;
 
-        // Calculate the direction from the player to the mouse position
         Vector2 direction = (mousePosition - transform.position).normalized;
+        GameObject flameProjectile = Instantiate(fireProjectile, fireProjectileTransform.position, Quaternion.identity);
+        Destroy(flameProjectile, 5);
 
-        // Instantiate the projectile
-        GameObject projectile = Instantiate(fireProjectile, fireProjectileTransform.position, Quaternion.identity);
-
-        Destroy(projectile,5);
-
-        // Get the Rigidbody2D component of the projectile and set its velocity
-        Rigidbody2D rb = projectile.GetComponent<Rigidbody2D>();
+        Rigidbody2D rb = flameProjectile.GetComponent<Rigidbody2D>();
         if (rb != null)
         {
             rb.velocity = direction * speed;
